@@ -11,17 +11,17 @@
 
 /* Couleurs par type */
 .p-toast-message-success {
-  background-color: #16a34a !important;
+  background-color: #0e9b05 !important;
 }
 
 .p-toast-message-info {
-  background-color: #0284c7 !important;
+  background-color: #0148b0 !important;
 }
 
 .p-toast-message-warn {
-  background-color: #ea580c !important;
+  background-color: #f2bf35 !important;
 }
 
 .p-toast-message-error {
-  background-color: #dc2626 !important;
+  background-color: #b00202 !important;
 }

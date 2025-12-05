@@ -5,7 +5,7 @@ const layoutConfig = reactive({
     primary: 'indigo',
     surface: 'ocean',  // slate 
     darkTheme: false,
-    menuMode: 'static'
+    menuMode: 'static' // overlay
 });
 
 const layoutState = reactive({

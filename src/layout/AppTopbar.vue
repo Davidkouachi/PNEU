@@ -11,7 +11,7 @@ import NotificationList from "@/components/perso/NotificationList.vue";
 
 const auth = useAuthStore();
 const { showToast, removeAllToasts } = useToastAlert();
-const { toggleMenu, toggleDarkMode, isDarkTheme } = useLayout();
+const { toggleMenu, toggleDarkMode, isDarkTheme, layoutConfig, layoutState } = useLayout();
 const preloaderSpinner = usePreloaderSpinner();
 const confirm = useConfirm();
 const drawerUse = useDrawerStore();
@@ -88,6 +88,18 @@ const Btnfoter = [
     }
 ];
 
+const menuIcon = computed(() => {
+    // if (layoutConfig.menuMode === 'static') {
+    //     return layoutState.staticMenuDesktopInactive ? 'pi pi-angle-right' : 'pi pi-angle-left';
+    // }
+
+    // if (layoutConfig.menuMode === 'overlay') {
+    //     return layoutState.overlayMenuActive ? 'pi pi-times' : 'pi pi-bars';
+    // }
+
+    return 'pi pi-bars';
+});
+
 // Fonction pour ouvrir le Drawer
 function showNotifications() {
   drawerUse.show(
@@ -148,7 +160,7 @@ onMounted(() => {
     <div class="layout-topbar">
         <div class="layout-topbar-logo-container">
             <button class="layout-menu-button layout-topbar-action" @click="toggleMenu">
-                <i class="pi pi-bars"></i>
+                <i :class="menuIcon"></i>
             </button>
             <router-link to="/" class="layout-topbar-logo">
                 <img src="@/assets/img/logo/light/2.png" class="w-[11rem] shrink-0" alt="Logo">
@@ -188,7 +200,7 @@ onMounted(() => {
                         <Menu :model="items" class="w-full">
                             <template #start>
                                 <button v-ripple class="relative overflow-hidden w-full border-0 bg-transparent flex items-start p-2 pl-4 hover:bg-surface-100 dark:hover:bg-surface-800 rounded-none cursor-pointer transition-colors duration-200">
-                                    <Avatar icon="pi pi-user" class="mr-2" size="large" shape="circle" />
+                                    <Avatar icon="pi pi-user" class="mr-2 avatar" size="large" shape="circle" />
                                     <span class="inline-flex flex-col items-start">
                                         <span class="font-bold text-lg">{{ auth.user?.email || 'Invité' }}</span>
                                         <span class="text-md">Admin</span>
@@ -226,4 +238,10 @@ onMounted(() => {
   border-radius:0.5rem;
 }
 
+.layout-topbar-action {
+    color: #0148b0 !important;
+}
+.avatar {
+   color: #0148b0 !important; 
+}
 </style>

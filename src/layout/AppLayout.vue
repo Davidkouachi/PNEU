@@ -114,7 +114,7 @@
                 <div v-else>
                     <div class="py-2 mb-1">
                         <nav class="breadcrumb">
-                            <span v-for="(item, i) in breadcrumbMenu.items" :key="i">
+                            <span v-for="(item, i) in breadcrumbMenu.items" :key="i" class="lienRoute">
                               <i :class="item.icon" v-if="item.icon"></i>
                               {{ item.label }}
                               <span class="font-semibold mx-1" v-if="i < breadcrumbMenu.items.length - 1 "> > </span>
@@ -397,6 +397,16 @@ watch(
     { immediate: true }
 );
 
+watch(() => layoutState.staticMenuMobileActive, (isOpen) => {
+    if (isOpen) {
+        document.body.style.overflow = 'hidden';        // Désactive le scroll global
+        document.documentElement.style.overflow = 'hidden';
+    } else {
+        document.body.style.overflow = '';             // Réactive le scroll
+        document.documentElement.style.overflow = '';
+    }
+});
+
 const containerClass = computed(() => {
     return {
         'layout-overlay': layoutConfig.menuMode === 'overlay',
@@ -494,7 +504,9 @@ function isOutsideClicked(event) {
 
 
 
-
+.lienRoute {
+    color: #0148b0 !important;
+}
 
 
 

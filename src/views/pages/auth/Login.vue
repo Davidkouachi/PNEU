@@ -122,7 +122,7 @@
                                 <div class="font-bold text-xl mb-5">
                                     Vérification Code OTP
                                 </div>
-                                <InputMask id="basic" v-model="otp_Mdp" mask="999-999-999" placeholder="999-999-999" class="text-center w-full"/>
+                                <InputMask inputmode="numeric" v-model="otp_Mdp" mask="999-999-999" placeholder="999-999-999" class="text-center w-full"/>
                                 <div class="flex justify-between mt-5 self-stretch">
                                     <Button 
                                         link

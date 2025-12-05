@@ -1,10 +1,98 @@
 import { ref, onMounted } from 'vue';
 
 export const model = ref([
+    // {
+    //     label: 'Home',
+    //     items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/', permissions: ['admin', 'user'], }]
+    // },
+
     {
         label: 'Home',
-        items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/', permissions: ['admin', 'user'], }]
+        items: [
+            { label: 'Dashboard', icon: 'pi pi-fw pi-home', to: '/', permissions: ['admin', 'professeur', 'etudiant', 'controleur', 'ch_recla'] }
+        ]
     },
+
+    // --- ADMIN & CONTROLEUR ---
+    {
+        label: 'Gestion du Personnel',
+        items: [
+            { label: 'Nouvel utilisateur', icon: 'pi pi-plus', to: '/Nouvel_utilisateur', permissions: ['admin'] },
+            { label: 'Liste utilisateur', icon: 'pi pi-list', to: '/List_utilisateur', permissions: ['admin', 'controleur'] },
+
+            {
+                label: 'Éléments',
+                icon: 'pi pi-fw pi-bookmark',
+                permissions: ['admin', 'controleur'],
+                items: [
+                    { label: 'Basic', icon: 'pi pi-list', to: '/element_basic', permissions: ['admin', 'controleur'] },
+                    { label: 'Graphique', icon: 'pi pi-chart-bar', to: '/element_chart', permissions: ['admin', 'controleur'] },
+                ]
+            }
+        ]
+    },
+
+    // --- PROFESSEUR ---
+    {
+        label: 'Espace Professeur',
+        items: [
+            { label: 'Mes Cours', icon: 'pi pi-book', to: '/prof/cours', permissions: ['professeur'] },
+            { label: 'Liste Étudiants', icon: 'pi pi-users', to: '/prof/etudiants', permissions: ['professeur'] },
+            { label: 'Notes', icon: 'pi pi-pencil', to: '/prof/notes', permissions: ['professeur'] }
+        ]
+    },
+
+    // --- ETUDIANT ---
+    {
+        label: 'Espace Étudiant',
+        items: [
+            { label: 'Mon Profil', icon: 'pi pi-user', to: '/etu/profil', permissions: ['etudiant'] },
+            { label: 'Mes Cours', icon: 'pi pi-book', to: '/etu/cours', permissions: ['etudiant'] },
+            { label: 'Mes Notes', icon: 'pi pi-chart-line', to: '/etu/notes', permissions: ['etudiant'] },
+        ]
+    },
+
+    // --- CHARGE RECLAMATION ---
+    {
+        label: 'Réclamations',
+        items: [
+            { label: 'Toutes les réclamations', icon: 'pi pi-inbox', to: '/recla/all', permissions: ['ch_recla'] },
+            { label: 'Réclamations en cours', icon: 'pi pi-spin pi-cog', to: '/recla/encours', permissions: ['ch_recla'] },
+            { label: 'Réclamations clôturées', icon: 'pi pi-check-circle', to: '/recla/cloture', permissions: ['ch_recla'] },
+        ]
+    },
+
+    // --- COMMUN (UI Components) ---
+    {
+        label: 'UI Components',
+        items: [
+            { label: 'Form Layout', icon: 'pi pi-fw pi-id-card', to: '/uikit/formlayout', permissions: ['admin', 'professeur'] },
+            { label: 'Input', icon: 'pi pi-fw pi-check-square', to: '/uikit/input', permissions: ['admin'] },
+            { label: 'Button', icon: 'pi pi-fw pi-mobile', to: '/uikit/button', permissions: ['admin'] },
+            { label: 'Table', icon: 'pi pi-fw pi-table', to: '/uikit/table', permissions: ['admin', 'controleur'] },
+            { label: 'List', icon: 'pi pi-fw pi-list', to: '/uikit/list', permissions: ['admin'] },
+            { label: 'Tree', icon: 'pi pi-fw pi-share-alt', to: '/uikit/tree', permissions: ['admin'] },
+            { label: 'Panel', icon: 'pi pi-fw pi-tablet', to: '/uikit/panel', permissions: ['admin'] },
+            { label: 'Overlay', icon: 'pi pi-fw pi-clone', to: '/uikit/overlay', permissions: ['admin'] },
+            { label: 'Media', icon: 'pi pi-fw pi-image', to: '/uikit/media', permissions: ['admin'] },
+            { label: 'Menu', icon: 'pi pi-fw pi-bars', to: '/uikit/menu', permissions: ['admin'] },
+            { label: 'Message', icon: 'pi pi-fw pi-comment', to: '/uikit/message', permissions: ['admin'] },
+            { label: 'File', icon: 'pi pi-fw pi-file', to: '/uikit/file', permissions: ['admin'] },
+            { label: 'Chart', icon: 'pi pi-fw pi-chart-bar', to: '/uikit/charts', permissions: ['admin', 'controleur'] },
+            { label: 'Timeline', icon: 'pi pi-fw pi-calendar', to: '/uikit/timeline', permissions: ['admin'] },
+            { label: 'Misc', icon: 'pi pi-fw pi-circle', to: '/uikit/misc', permissions: ['admin'] }
+        ]
+    },
+
+    // --- TOUS LES ROLES ---
+    {
+        label: 'Support',
+        items: [
+            { label: 'Documentation', icon: 'pi pi-fw pi-book', to: '/documentation', permissions: ['admin', 'professeur', 'etudiant', 'controleur', 'ch_recla'] },
+            { label: 'View Source', icon: 'pi pi-fw pi-github', url: 'https://github.com/primefaces/sakai-vue', target: '_blank', permissions: ['admin'] }
+        ]
+    },
+
     {
         label: 'Personnel',
         items: [
