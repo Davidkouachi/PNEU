@@ -13,22 +13,19 @@ export const model = ref([
         ]
     },
 
-    // --- ADMIN & CONTROLEUR ---
     {
-        label: 'Gestion du Personnel',
+        label: 'Personnel',
         items: [
-            { label: 'Nouvel utilisateur', icon: 'pi pi-plus', to: '/Nouvel_utilisateur', permissions: ['admin'] },
-            { label: 'Liste utilisateur', icon: 'pi pi-list', to: '/List_utilisateur', permissions: ['admin', 'controleur'] },
-
+            { label: 'Nouvel utilisateur', icon: 'pi pi-plus', to: '/Nouvel_utilisateur', permissions: ['admin', 'user'], },
+            { label: 'Liste utilisateur', icon: 'pi pi-list', to: '/List_utilisateur', permissions: ['admin', 'user'], },
             {
-                label: 'Éléments',
+                label: 'Elements',
                 icon: 'pi pi-fw pi-bookmark',
-                permissions: ['admin', 'controleur'],
                 items: [
-                    { label: 'Basic', icon: 'pi pi-list', to: '/element_basic', permissions: ['admin', 'controleur'] },
-                    { label: 'Graphique', icon: 'pi pi-chart-bar', to: '/element_chart', permissions: ['admin', 'controleur'] },
+                    { label: 'Basic', icon: 'pi pi-list', to: '/element_basic', permissions: ['admin', 'user'], },
+                    { label: 'Graphique', icon: 'pi pi-chart-bar', to: '/element_chart', permissions: ['admin', 'user'], },
                 ]
-            }
+            },
         ]
     },
 
@@ -93,21 +90,6 @@ export const model = ref([
         ]
     },
 
-    {
-        label: 'Personnel',
-        items: [
-            { label: 'Nouvel utilisateur', icon: 'pi pi-plus', to: '/Nouvel_utilisateur', permissions: ['admin', 'user'], },
-            { label: 'Liste utilisateur', icon: 'pi pi-list', to: '/List_utilisateur', permissions: ['admin', 'user'], },
-            {
-                label: 'Elements',
-                icon: 'pi pi-fw pi-bookmark',
-                items: [
-                    { label: 'Basic', icon: 'pi pi-list', to: '/element_basic', permissions: ['admin', 'user'], },
-                    { label: 'Graphique', icon: 'pi pi-chart-bar', to: '/element_chart', permissions: ['admin', 'user'], },
-                ]
-            },
-        ]
-    },
     {
         label: 'UI Components',
         items: [

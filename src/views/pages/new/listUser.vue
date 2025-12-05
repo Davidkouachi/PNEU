@@ -298,6 +298,43 @@ const toggleRow = (checked, row) => {
     }
 };
 
+// 📌 Vérifie si tous les utilisateurs sélectionnables sont cochés
+const isAllSelected = computed(() => {
+    const selectableRows = users.value.filter(u => u.login !== auth.user?.login);
+    return selectableRows.length > 0 && selectableRows.every(u => isSelected(u));
+});
+
+// 📌 Select / Unselect ALL
+
+const toggleSelectAll = (checked) => {
+    const selectableRows = users.value.filter(u => u.login !== auth.user?.login);
+
+    // // 🚫 STOP si plus de 100 lignes
+    // if (selectableRows.length > 3) {
+    //     showToast('warn', 'Limite atteinte', 'Impossible de sélectionner plus de 100 comptes.');
+
+    //     // ❌ Deselect "Select All"
+    //     selectedUsers.value = [];
+
+    //     // ⏱ Force update du computed / DOM
+    //     await nextTick();
+    //     return;
+    // }
+
+    if (checked) {
+        selectedUsers.value = [...selectableRows.map(u => ({ ...u }))];
+    } else {
+        selectedUsers.value = [];
+    }
+};
+
+// ✅ Computed pour désactiver "Select All"
+const isSelectAllDisabled = computed(() => {
+    const hasCurrentUser = users.value.some(u => u.login === auth.user?.login);
+    const tooManyRows = users.value.length > 100;
+    return hasCurrentUser || tooManyRows;
+});
+
 onMounted(() => {
     fetchUsers();
 });
@@ -432,6 +469,17 @@ onMounted(() => {
             </template>
 
             <Column style="width:2rem" class="p-0">
+                <!-- Header : Checkbox Select All -->
+                <template #header>
+                    <Checkbox
+                        binary
+                        :modelValue="isAllSelected"
+                        @update:modelValue="toggleSelectAll"
+                        :disabled="isSelectAllDisabled"
+                    />
+                </template>
+
+                <!-- Body : Checkbox par ligne -->
                 <template #body="{ data }">
                     <Checkbox
                         binary

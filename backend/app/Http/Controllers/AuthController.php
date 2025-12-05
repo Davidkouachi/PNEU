@@ -83,224 +83,96 @@ class AuthController extends Controller
             DB::rollback();
             return response()->json(['error' => true, 'message' => $e->getMessage()], 409);
         }
-
     }
 
-    // public function traitement_login(Request $request)
-    // {
-    //     $login = $request->input('login');
-    //     $password = $request->input('password');
-    //     $remember = $request->boolean('remember_me');
+    public function traitement_login(Request $request)
+    {
+        $credentials = $request->only('login', 'password');
+        $deviceId = $request->input('device_id');
 
-    //     // Récupération de l'utilisateur par login exact (sensible à la casse)
-    //     // $user = DB::table('users')->whereRaw('BINARY login = ?', [$login])->first(); // sensible a la casse MySql
-    //     // $user = DB::table('users')->whereRaw('login ILIKE ?', [$login])->first(); // insensible a la casse postgresql
+        if (!$token = Auth::guard('api')->attempt($credentials)) {
+            return response()->json(['warn' => true, 'message' => 'Login ou mot de passe incorrect'], 201);
+        }
 
-    //     $driver = DB::getDriverName();
+        $user = Auth::guard('api')->user();
 
-    //     if ($driver === 'pgsql') {
-    //         $user = DB::table('users')->where('login', $login)->first(); // sensible à la casse
-    //     } else {
-    //         $user = DB::table('users')->whereRaw('BINARY login = ?', [$login])->first(); // MySQL
-    //     }
+        // Génère un refresh token pour CET appareil
+        $refreshToken = base64_encode(Str::random(64));
 
-    //     if (!$user) {
-    //         return response()->json([
-    //             'warn' => true,
-    //             'message' => 'Login ou mot de passe incorrect'
-    //         ], 201);
-    //     }
+        DB::table('refresh_tokens')->updateOrInsert(
+            [
+                'user_id' => $user->id,
+                'device_id' => $deviceId
+            ],
+            [
+                'token' => $refreshToken,
+                'expires_at' => now()->addMinutes((int) config('jwt.refresh_ttl')),
+                'updated_at' => now(),
+                'created_at' => now()
+            ]
+        );
 
-    //     // Vérif du mot de passe
-    //     if (!Hash::check($password, $user->password)) {
-    //         return response()->json([
-    //             'warn' => true,
-    //             'message' => 'Login ou mot de passe incorrect'
-    //         ], 201);
-    //     }
-
-    //     // Vérification des sessions existantes
-    //     $existingSessions = DB::table('sessions')->where('user_id', $user->id)->get();
-
-    //     if ($existingSessions->count() > 0) {
-    //         $lastSession = $existingSessions->sortByDesc('last_activity')->first();
-    //         $lastActivity = $lastSession->last_activity ?? null;
-
-    //         if ($lastActivity) {
-    //             $now = time();
-    //             $diff = $now - $lastActivity;
-
-    //             if ($diff <= 600) { // 10 minutes
-    //                 return response()->json([
-    //                     'info' => true,
-    //                     'message' => 'Ce compte est déjà connecté sur un autre appareil.'
-    //                 ], 201);
-    //             }
-    //         }
-
-    //         // Suppression sessions expirées
-    //         DB::table('sessions')->where('user_id', $user->id)->delete();
-    //     }
-
-    //     // Connexion Laravel
-    //     Auth::loginUsingId($user->id, $remember);
-
-    //     // Session lifetime depuis config/session.php
-    //     $sessionLifetimeMinutes = config('session.lifetime');
-    //     $sessionExpireTimestamp = now()->addMinutes($sessionLifetimeMinutes)->timestamp * 1000; // en ms
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Connexion réussie',
-    //         'user'    => Auth::user(),
-    //         'session_lifetime' => $sessionLifetimeMinutes,
-    //         'session_expire'   => $sessionExpireTimestamp
-    //     ], 200);
-    // }
-
-    // public function traitement_login(Request $request)
-    // {
-    //     $credentials = $request->only('login', 'password');
-
-    //     Log::info($credentials);
-
-    //     if (!$token = Auth::guard('api')->attempt($credentials)) {
-    //         return response()->json(['warn' => true, 'message' => 'Login ou mot de passe incorrect'], 201);
-    //     }
-
-    //     $user = Auth::guard('api')->user();
-
-    //     // Crée un refresh token
-    //     $refreshToken = base64_encode(Str::random(64));
-    //     // DB::table('refresh_tokens')->where('user_id', $user->id)->delete();
-    //     // DB::table('refresh_tokens')->insert([
-    //     //     'user_id' => $user->id,
-    //     //     'token' => $refreshToken,
-    //     //     'expires_at' => now()->addMinutes((int) config('jwt.refresh_ttl')),
-    //     //     'created_at' => now(),
-    //     // ]);
-
-    //     DB::table('refresh_tokens')
-    //         ->where('user_id', $user->id)
-    //         ->update([
-    //             'token' => $refreshToken,
-    //             'expires_at' => now()->addMinutes((int) config('jwt.refresh_ttl')),
-    //         ]);
-
-    //     return response()->json([
-    //         'success' => true,
-    //         'message' => 'Connexion réussie',
-    //         'user' => [
-    //             'id' => $user->id,
-    //             'name' => $user->name,
-    //             'email' => $user->email,
-    //             'role' => $user->roles,
-    //             'login' => $user->login,
-    //         ],
-    //         'access_token' => $token,
-    //         'refresh_token' => $refreshToken,
-    //         'expires_in' => Auth::guard('api')->factory()->getTTL() * 60, // secondes
-    //     ]);
-    // }
-
-public function traitement_login(Request $request)
-{
-    $credentials = $request->only('login', 'password');
-    $deviceId = $request->input('device_id');
-
-    if (!$token = Auth::guard('api')->attempt($credentials)) {
-        return response()->json(['warn' => true, 'message' => 'Login ou mot de passe incorrect'], 201);
-    }
-
-    $user = Auth::guard('api')->user();
-
-    // Génère un refresh token pour CET appareil
-    $refreshToken = base64_encode(Str::random(64));
-
-    DB::table('refresh_tokens')->updateOrInsert(
-        [
-            'user_id' => $user->id,
-            'device_id' => $deviceId
-        ],
-        [
-            'token' => $refreshToken,
-            'expires_at' => now()->addMinutes((int) config('jwt.refresh_ttl')),
-            'updated_at' => now(),
-            'created_at' => now()
-        ]
-    );
-
-    return response()->json([
-        'success' => true,
-        'message' => 'Connexion réussie',
-        'user' => [
-            'id' => $user->id,
-            'name' => $user->name,
-            'email' => $user->email,
-            'role' => $user->roles,
-            'login' => $user->login,
-        ],
-        'access_token'  => $token,
-        'refresh_token' => $refreshToken,
-        'device_id'     => $deviceId,
-        'expires_in'    => Auth::guard('api')->factory()->getTTL() * 60,
-    ]);
-}
-    // public function user_list(Request $request)
-    // {
-    //     $data = DB::table('users')->select('id', 'name', 'email', 'login')->get();
-
-    //     return response()->json([
-    //         'success' => $data->isNotEmpty(),
-    //         'data' => $data,
-    //     ], $data->isNotEmpty() ? 200 : 204);
-    // }
-
-public function user_list(Request $request)
-{
-    // Récupérer les utilisateurs existants
-    $data = DB::table('users')->select('id', 'name', 'email', 'login', 'roles', 'created_at')->get();
-
-    $maxId = $data->max('id');  // Le plus grand ID réel
-    $nextId = $maxId + 1;
-
-    // Ajouter des fake users
-    for ($i = $nextId; $i < $nextId + 15000; $i++) {
-        $data->push((object)[
-            'id' => $i,
-            'name' => "User $i",
-            'roles' => "admin",
-            'email' => "user$i@example.com",
-            'login' => "user$i",
-            'created_at' => now(),
+        return response()->json([
+            'success' => true,
+            'message' => 'Connexion réussie',
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'role' => $user->roles,
+                'login' => $user->login,
+            ],
+            'access_token'  => $token,
+            'refresh_token' => $refreshToken,
+            'device_id'     => $deviceId,
+            'expires_in'    => Auth::guard('api')->factory()->getTTL() * 60,
         ]);
     }
 
-    return response()->json([
-        'success' => true,
-        'data' => $data,
-    ]);
-}
+    public function user_list(Request $request)
+    {
+        // Récupérer les utilisateurs existants
+        $data = DB::table('users')->select('id', 'name', 'email', 'login', 'roles', 'created_at')->get();
 
-public function deleteUser($id)
-{
-    $user = DB::table('users')->where('id', $id)->exists();
+        $maxId = $data->max('id');  // Le plus grand ID réel
+        $nextId = $maxId + 1;
 
-    if (!$user) {
+        // Ajouter des fake users
+        for ($i = $nextId; $i < $nextId + 5; $i++) {
+            $data->push((object)[
+                'id' => $i,
+                'name' => "User $i",
+                'roles' => "admin",
+                'email' => "user$i@example.com",
+                'login' => "user$i",
+                'created_at' => now(),
+            ]);
+        }
+
         return response()->json([
-            'info' => true,
-            'message' => 'Utilisateur introuvable'
-        ], 201);
+            'success' => true,
+            'data' => $data,
+        ]);
     }
 
-    $delete = DB::table('users')->where('id', $id)->delete();
+    public function deleteUser($id)
+    {
+        $user = DB::table('users')->where('id', $id)->exists();
 
-    return response()->json([
-        'success' => true,
-        'message' => 'Utilisateur supprimé avec succès'
-    ], 200);
-}
+        if (!$user) {
+            return response()->json([
+                'info' => true,
+                'message' => 'Utilisateur introuvable'
+            ], 201);
+        }
 
+        $delete = DB::table('users')->where('id', $id)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Utilisateur supprimé avec succès'
+        ], 200);
+    }
 
     public function user_count(Request $request)
     {
@@ -317,96 +189,51 @@ public function deleteUser($id)
         return response()->json(Auth::guard('api')->user());
     }
 
-    // public function refreshToken(Request $request)
-    // {
-    //     $refreshToken = $request->input('refresh_token');
+    public function refreshToken(Request $request)
+    {
+        $deviceId = $request->input('device_id');
+        $refreshToken = $request->input('refresh_token');
 
-    //     $tokenData = DB::table('refresh_tokens')->where('token', $refreshToken)->first();
+        $tokenData = DB::table('refresh_tokens')
+            ->where('device_id', $deviceId)
+            ->where('token', $refreshToken)
+            ->first();
 
-    //     if (!$tokenData || $tokenData->expires_at < now()) {
-    //         return response()->json(['error' => 'Refresh token expiré ou invalide'], 401);
-    //     }
+        if (!$tokenData || $tokenData->expires_at < now()) {
+            return response()->json(['error' => 'Refresh token expiré ou invalide'], 401);
+        }
 
-    //     $userData = DB::table('users')->where('id', $tokenData->user_id)->first();
-    //     if (!$userData) {
-    //         return response()->json(['error' => 'Utilisateur introuvable'], 401);
-    //     }
+        $userData = DB::table('users')->where('id', $tokenData->user_id)->first();
+        if (!$userData) {
+            return response()->json(['error' => 'Utilisateur introuvable'], 401);
+        }
 
-    //     // Crée un modèle User et définit manuellement l'id
-    //     $user = new User();
-    //     $user->forceFill((array) $userData); // forceFill remplit tous les champs mass assignable
-    //     $user->setAttribute('id', $userData->id); // Assure que l'id est défini
-    //     $user->exists = true; // Indique à Eloquent que l'utilisateur existe dans la base
+        // Crée un modèle User et définit manuellement l'id
+        $user = new User();
+        $user->forceFill((array) $userData); // forceFill remplit tous les champs mass assignable
+        $user->setAttribute('id', $userData->id); // Assure que l'id est défini
+        $user->exists = true; // Indique à Eloquent que l'utilisateur existe dans la base
 
-    //     // Génère un nouveau access token JWT
-    //     $newAccessToken = Auth::guard('api')->login($user);
+        // nouveau access token
+        $newAccessToken = Auth::guard('api')->login($user);
 
-    //     // Rotation du refresh token
-    //     $newRefresh = base64_encode(Str::random(64));
-    //     // DB::table('refresh_tokens')->where('token', $refreshToken)->update([
-    //     //     'token' => $newRefresh,
-    //     //     'expires_at' => now()->addMinutes((int) config('jwt.refresh_ttl')),
-    //     // ]);
-    //     DB::table('refresh_tokens')
-    //         ->where('token', $refreshToken)
-    //         ->update([
-    //             'expires_at' => now()->addMinutes((int) config('jwt.refresh_ttl')),
-    //         ]);
-    //     $newRefresh = $refreshToken;
+        // rotation refresh
+        $newRefresh = base64_encode(Str::random(64));
 
-    //     return response()->json([
-    //         'access_token' => $newAccessToken,
-    //         'refresh_token' => $newRefresh,
-    //         'expires_in' => Auth::guard('api')->factory()->getTTL() * 60
-    //     ]);
-    // }
+        DB::table('refresh_tokens')
+            ->where('device_id', $deviceId)
+            ->update([
+                'token' => $newRefresh,
+                'expires_at' => now()->addMinutes((int) config('jwt.refresh_ttl')),
+                'updated_at' => now()
+            ]);
 
-public function refreshToken(Request $request)
-{
-    $deviceId = $request->input('device_id');
-    $refreshToken = $request->input('refresh_token');
-
-    $tokenData = DB::table('refresh_tokens')
-        ->where('device_id', $deviceId)
-        ->where('token', $refreshToken)
-        ->first();
-
-    if (!$tokenData || $tokenData->expires_at < now()) {
-        return response()->json(['error' => 'Refresh token expiré ou invalide'], 401);
-    }
-
-    $userData = DB::table('users')->where('id', $tokenData->user_id)->first();
-    if (!$userData) {
-        return response()->json(['error' => 'Utilisateur introuvable'], 401);
-    }
-
-    // Crée un modèle User et définit manuellement l'id
-    $user = new User();
-    $user->forceFill((array) $userData); // forceFill remplit tous les champs mass assignable
-    $user->setAttribute('id', $userData->id); // Assure que l'id est défini
-    $user->exists = true; // Indique à Eloquent que l'utilisateur existe dans la base
-
-    // nouveau access token
-    $newAccessToken = Auth::guard('api')->login($user);
-
-    // rotation refresh
-    $newRefresh = base64_encode(Str::random(64));
-
-    DB::table('refresh_tokens')
-        ->where('device_id', $deviceId)
-        ->update([
-            'token' => $newRefresh,
-            'expires_at' => now()->addMinutes((int) config('jwt.refresh_ttl')),
-            'updated_at' => now()
+        return response()->json([
+            'access_token'  => $newAccessToken,
+            'refresh_token' => $newRefresh,
+            'expires_in'    => Auth::guard('api')->factory()->getTTL() * 60
         ]);
-
-    return response()->json([
-        'access_token'  => $newAccessToken,
-        'refresh_token' => $newRefresh,
-        'expires_in'    => Auth::guard('api')->factory()->getTTL() * 60
-    ]);
-}
-
+    }
 
     public function checkAuth()
     {
@@ -462,29 +289,16 @@ public function refreshToken(Request $request)
         }
     }
 
-    // public function logout(Request $request)
-    // {
-    //     $refresh = $request->input('refresh_token');
-    //     if ($refresh) {
-    //         DB::table('refresh_tokens')->where('token', $refresh)->delete();
-    //     }
+    public function logout(Request $request)
+    {
+        DB::table('refresh_tokens')
+            ->where('device_id', $request->input('device_id'))
+            ->where('token', $request->input('refresh_token'))
+            ->delete();
 
-    //     Auth::guard('api')->logout();
+        Auth::guard('api')->logout();
 
-    //     return response()->json(['message' => 'Déconnexion réussie']);
-    // }
-
-public function logout(Request $request)
-{
-    DB::table('refresh_tokens')
-        ->where('device_id', $request->input('device_id'))
-        ->where('token', $request->input('refresh_token'))
-        ->delete();
-
-    Auth::guard('api')->logout();
-
-    return response()->json(['message' => 'Déconnexion réussie']);
-}
-
+        return response()->json(['message' => 'Déconnexion réussie']);
+    }
 
 }

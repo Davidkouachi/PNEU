@@ -2,7 +2,7 @@ import axios from "axios";
 import { useAuthStore } from "@/function/stores/auth";
 import { getSecureItem } from "@/function/stores/secureStorage";
 
-axios.defaults.baseURL = "http://192.168.1.64:8000";
+axios.defaults.baseURL = "http://192.168.1.65:8000";
 // axios.defaults.baseURL = "http://127.0.0.1:8000";
 axios.defaults.headers.common["Accept"] = "application/json";
 
@@ -33,7 +33,7 @@ axios.interceptors.request.use(config => {
 // 🔹 Intercepteur réponse
 axios.interceptors.response.use(
   response => response,
-  async error => { // <-- async ici
+  async error => {
     const auth = useAuthStore();
     const originalRequest = error.config;
 
@@ -44,6 +44,29 @@ axios.interceptors.response.use(
 
     if (auth.isLoggingOut) return Promise.reject(error);
 
+    // 🔥 Liste des endpoints où on NE DOIT PAS auto-logout si l’erreur ne vient pas du token
+    const ignoreAutoLogout = [
+      "/api/users/list",
+    ];
+
+    const isSafeEndpoint = ignoreAutoLogout.some(url =>
+      originalRequest.url?.includes(url)
+    );
+
+    const message = error.response?.data?.message || "";
+    const isTokenError =
+      message.includes("token") ||
+      message.includes("expired") ||
+      message.includes("invalid");
+
+    // ✅ Si endpoint ignoré + ce N’EST PAS une erreur token → pas de logout
+    if (isSafeEndpoint && !isTokenError) {
+      return Promise.reject(error);
+    }
+
+    // -----------------------------
+    // 👉 Refresh Token classique
+    // -----------------------------
     if (error.response?.status === 401 && !originalRequest._retry) {
 
       if (isRefreshing) {
@@ -61,15 +84,13 @@ axios.interceptors.response.use(
       isRefreshing = true;
 
       try {
-        const refreshToken = getSecureItem("refresh_token"); // synchrone
+        const refreshToken = getSecureItem("refresh_token");
         if (!refreshToken) {
           auth.logoutLocal(true);
           return Promise.reject(error);
         }
 
-        // ⚡ await pour récupérer le token rafraîchi
         const newToken = await auth.refreshAccessToken();
-
         if (!newToken) {
           auth.logoutLocal(true);
           return Promise.reject(error);
@@ -88,9 +109,9 @@ axios.interceptors.response.use(
         isRefreshing = false;
 
         const status = err.response?.status;
-        const message = err.response?.data?.message || "";
+        const msg = err.response?.data?.message || "";
 
-        if (status === 401 || status === 422 || message.includes("invalid") || message.includes("expired")) {
+        if (status === 401 || status === 422 || msg.includes("invalid") || msg.includes("expired")) {
           auth.logoutLocal(true);
           return Promise.reject(err);
         }
@@ -103,5 +124,6 @@ axios.interceptors.response.use(
     return Promise.reject(error);
   }
 );
+
 
 export default axios;
